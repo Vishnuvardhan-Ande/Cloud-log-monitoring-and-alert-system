@@ -1,0 +1,10 @@
+2026-03-13 10:00:01 INFO: Server started successfully
+2026-03-13 10:01:15 INFO: User login request received
+2026-03-13 10:01:16 INFO: User authenticated successfully
+2026-03-13 10:02:05 WARNING: High memory usage detected
+2026-03-13 10:02:30 INFO: Processing API request
+2026-03-13 10:03:12 ERROR: Database connection failed
+2026-03-13 10:03:45 INFO: Retrying database connection
+2026-03-13 10:04:10 INFO: Database connection restored
+2026-03-13 10:05:20 CRITICAL: Server crash detected
+2026-03-13 10:06:00 INFO: System restart initiated

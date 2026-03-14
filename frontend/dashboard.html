@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cloud Log Monitoring Dashboard</title>
+
+<style>
+
+body{
+font-family: Arial;
+background:#f4f6f8;
+text-align:center;
+}
+
+.card{
+display:inline-block;
+padding:20px;
+margin:10px;
+border-radius:10px;
+color:white;
+width:120px;
+font-size:20px;
+}
+
+.info{background:#3498db;}
+.warning{background:#f1c40f;}
+.error{background:#e74c3c;}
+.critical{background:#8e44ad;}
+
+button{
+padding:10px 20px;
+margin-top:20px;
+font-size:16px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Cloud Log Monitoring Dashboard</h1>
+
+<div class="card info">
+INFO
+<div id="info">0</div>
+</div>
+
+<div class="card warning">
+WARNING
+<div id="warning">0</div>
+</div>
+
+<div class="card error">
+ERROR
+<div id="error">0</div>
+</div>
+
+<div class="card critical">
+CRITICAL
+<div id="critical">0</div>
+</div>
+
+<br>
+
+<button onclick="loadStats()">Refresh Logs</button>
+
+<script>
+
+function loadStats(){
+
+fetch("http://127.0.0.1:8000/dashboard")
+.then(response => response.json())
+.then(data => {
+
+if(!data.latest_log_statistics){
+alert("Upload a log file first!");
+return;
+}
+
+let stats = data.latest_log_statistics;
+
+document.getElementById("info").innerText = stats.INFO;
+document.getElementById("warning").innerText = stats.WARNING;
+document.getElementById("error").innerText = stats.ERROR;
+document.getElementById("critical").innerText = stats.CRITICAL;
+
+})
+.catch(error => console.log(error))
+
+}
+
+</script>
+
+</body>
+</html>
