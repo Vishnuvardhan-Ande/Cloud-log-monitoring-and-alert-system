@@ -1,18 +1,49 @@
 <!DOCTYPE html>
+
 <html>
+
 <head>
+
 <title>Cloud Log Monitoring Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 
 body{
-font-family: Arial;
+font-family: Arial, sans-serif;
 background:#f4f6f8;
 text-align:center;
+margin:0;
+padding:0;
+}
+
+h1{
+margin-top:20px;
+}
+
+#alertBox{
+display:none;
+background:#e74c3c;
+color:white;
+padding:10px;
+margin:10px;
+font-weight:bold;
+}
+
+#lastUpload{
+margin-top:10px;
+font-size:16px;
+}
+
+.dashboard{
+display:flex;
+justify-content:center;
+flex-wrap:wrap;
+margin-top:20px;
 }
 
 .card{
-display:inline-block;
 padding:20px;
 margin:10px;
 border-radius:10px;
@@ -28,8 +59,36 @@ font-size:20px;
 
 button{
 padding:10px 20px;
-margin-top:20px;
 font-size:16px;
+margin-top:15px;
+cursor:pointer;
+}
+
+.upload-box{
+margin-top:20px;
+}
+
+.chart-container{
+width:600px;
+margin:auto;
+margin-top:30px;
+}
+
+.pie-container{
+width:400px;
+margin:auto;
+margin-top:30px;
+}
+
+table{
+margin:auto;
+margin-top:30px;
+border-collapse:collapse;
+}
+
+th,td{
+padding:10px 20px;
+border:1px solid #ccc;
 }
 
 </style>
@@ -39,6 +98,23 @@ font-size:16px;
 <body>
 
 <h1>Cloud Log Monitoring Dashboard</h1>
+
+<p id="lastUpload">Last Log Upload: Not yet uploaded</p>
+
+<div id="alertBox">
+⚠ Critical Errors Detected in Logs
+</div>
+
+<div class="upload-box">
+
+<input type="file" id="logFile">
+<br><br>
+
+<button onclick="uploadLog()">Upload Log File</button>
+
+</div>
+
+<div class="dashboard">
 
 <div class="card info">
 INFO
@@ -60,36 +136,173 @@ CRITICAL
 <div id="critical">0</div>
 </div>
 
-<br>
+</div>
 
 <button onclick="loadStats()">Refresh Logs</button>
 
+<div class="chart-container">
+<canvas id="logChart"></canvas>
+</div>
+
+<div class="pie-container">
+<canvas id="pieChart"></canvas>
+</div>
+
+<h3>Log Summary</h3>
+
+<table>
+
+<tr>
+<th>Log Level</th>
+<th>Count</th>
+</tr>
+
+<tr>
+<td>INFO</td>
+<td id="infoCount">0</td>
+</tr>
+
+<tr>
+<td>WARNING</td>
+<td id="warningCount">0</td>
+</tr>
+
+<tr>
+<td>ERROR</td>
+<td id="errorCount">0</td>
+</tr>
+
+<tr>
+<td>CRITICAL</td>
+<td id="criticalCount">0</td>
+</tr>
+
+</table>
+
 <script>
 
-function loadStats(){
+let barChart = null
+let pieChart = null
 
-fetch("https://cloud-log-monitoring-and-alert-system.onrender.com/dashboard")
+function uploadLog(){
+
+let fileInput = document.getElementById("logFile")
+
+if(fileInput.files.length === 0){
+alert("Please select a log file")
+return
+}
+
+let formData = new FormData()
+formData.append("file", fileInput.files[0])
+
+fetch("https://cloud-log-monitoring-and-alert-system.onrender.com/upload-log",{
+
+method:"POST",
+body:formData
+
+})
 .then(response => response.json())
 .then(data => {
 
-if(!data.latest_log_statistics){
-alert("Upload a log file first!");
-return;
-}
+document.getElementById("lastUpload").innerText =
+"Last Log Upload: " + new Date().toLocaleString()
 
-let stats = data.latest_log_statistics;
+alert("Log uploaded and analyzed successfully")
 
-document.getElementById("info").innerText = stats.INFO;
-document.getElementById("warning").innerText = stats.WARNING;
-document.getElementById("error").innerText = stats.ERROR;
-document.getElementById("critical").innerText = stats.CRITICAL;
+loadStats()
 
 })
 .catch(error => console.log(error))
 
 }
 
+function loadStats(){
+
+fetch("https://cloud-log-monitoring-and-alert-system.onrender.com/dashboard")
+
+.then(response => response.json())
+
+.then(data => {
+
+if(!data.latest_log_statistics){
+
+return
+
+}
+
+let stats = data.latest_log_statistics
+
+document.getElementById("info").innerText = stats.INFO
+document.getElementById("warning").innerText = stats.WARNING
+document.getElementById("error").innerText = stats.ERROR
+document.getElementById("critical").innerText = stats.CRITICAL
+
+document.getElementById("infoCount").innerText = stats.INFO
+document.getElementById("warningCount").innerText = stats.WARNING
+document.getElementById("errorCount").innerText = stats.ERROR
+document.getElementById("criticalCount").innerText = stats.CRITICAL
+
+if(stats.ERROR > 0 || stats.CRITICAL > 0){
+document.getElementById("alertBox").style.display="block"
+}else{
+document.getElementById("alertBox").style.display="none"
+}
+
+let values = [
+stats.INFO,
+stats.WARNING,
+stats.ERROR,
+stats.CRITICAL
+]
+
+let labels = ["INFO","WARNING","ERROR","CRITICAL"]
+
+if(barChart){
+barChart.destroy()
+}
+
+if(pieChart){
+pieChart.destroy()
+}
+
+barChart = new Chart(document.getElementById("logChart"),{
+
+type:"bar",
+
+data:{
+labels:labels,
+datasets:[{
+label:"Log Severity",
+data:values
+}]
+}
+
+})
+
+pieChart = new Chart(document.getElementById("pieChart"),{
+
+type:"pie",
+
+data:{
+labels:labels,
+datasets:[{
+data:values
+}]
+}
+
+})
+
+})
+
+.catch(error => console.log(error))
+
+}
+
+setInterval(loadStats,20000)
+
 </script>
 
 </body>
+
 </html>
